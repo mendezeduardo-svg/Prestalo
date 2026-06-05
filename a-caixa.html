@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>A Caixa · comparte, no compres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  :root{--cream:#F4EEE2;--paper:#FBF8F1;--ink:#16271E;--pine:#1F5A3E;--pine-soft:#E4EEE6;
+    --terra:#D9572B;--terra-soft:#F8E5DC;--amber:#E0A12E;--muted:#6E756A;--line:#E4DCCC;--line-soft:#EDE6D6;--gold:#C9A227;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Hanken Grotesk',sans-serif;background:var(--cream);color:var(--ink);max-width:480px;margin:0 auto;position:relative;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-0.02em;}
+  .app{padding-bottom:86px;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+  .login{position:fixed;inset:0;max-width:480px;margin:0 auto;background:var(--ink);color:var(--paper);z-index:2000;display:flex;flex-direction:column;justify-content:center;padding:34px 28px;}
+  .login.hidden{display:none;}
+  .login .lg{width:54px;height:54px;border-radius:16px;background:var(--pine);display:grid;place-items:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;transform:rotate(-4deg);margin-bottom:22px;}
+  .login h2{font-size:30px;font-weight:800;line-height:1.05;margin-bottom:8px;}
+  .login p{opacity:.7;font-size:14px;margin-bottom:26px;line-height:1.5;}
+  .login label{display:block;font-size:12px;font-weight:600;opacity:.65;margin:0 0 6px 2px;}
+  .login input{width:100%;font-family:inherit;font-size:15px;padding:13px 15px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:var(--paper);outline:none;margin-bottom:14px;}
+  .login input:focus{border-color:var(--amber);}
+  .login .demo{font-size:11.5px;opacity:.5;margin-top:14px;text-align:center;line-height:1.5;}
+  header{position:sticky;top:0;z-index:500;background:var(--cream);border-bottom:1px solid var(--line);padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:var(--pine);color:var(--paper);display:grid;place-items:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;transform:rotate(-4deg);}
+  .brand .name{font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;line-height:1;}
+  .brand .tag{font-size:11px;color:var(--muted);margin-top:2px;}
+  .pts-chip{display:flex;align-items:center;gap:6px;background:var(--pine);color:var(--paper);padding:7px 13px;border-radius:30px;font-weight:700;font-size:14px;}
+  .pts-chip svg{width:15px;height:15px;}
+  .page{display:none;padding:18px;}
+  .page.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .eyebrow{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--terra);}
+  .h-big{font-size:27px;font-weight:800;line-height:1.05;margin:4px 0 16px;}
+  .search{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:14px;}
+  .search svg{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
+  .search input{border:none;background:none;outline:none;font-family:inherit;font-size:15px;width:100%;color:var(--ink);}
+  .cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none;}
+  .cats::-webkit-scrollbar{display:none;}
+  .cat{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:30px;border:1px solid var(--line);background:var(--paper);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s;color:var(--ink);}
+  .cat.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .cat .ico{font-size:15px;}
+  .count{font-size:12.5px;color:var(--muted);margin-bottom:12px;font-weight:500;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:.18s;display:flex;flex-direction:column;}
+  .card:active{transform:scale(.98);}
+  .card .thumb{height:92px;display:grid;place-items:center;font-size:40px;position:relative;}
+  .card .badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+  .b-ok{background:var(--pine-soft);color:var(--pine);}
+  .b-busy{background:var(--terra-soft);color:var(--terra);}
+  .card .body{padding:11px 12px 13px;flex:1;display:flex;flex-direction:column;}
+  .card .ttl{font-weight:700;font-size:14px;line-height:1.2;}
+  .card .stars{font-size:11px;color:var(--gold);margin-top:3px;letter-spacing:1px;}
+  .card .stars small{color:var(--muted);letter-spacing:0;}
+  .card .cost{margin-top:auto;padding-top:9px;font-weight:700;font-size:14px;color:var(--pine);display:flex;align-items:center;gap:4px;}
+  .btn{font-family:inherit;font-weight:700;font-size:15px;border:none;border-radius:13px;padding:13px;cursor:pointer;width:100%;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn:active{transform:scale(.98);}
+  .btn-pine{background:var(--pine);color:var(--paper);}
+  .btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn svg{width:18px;height:18px;}
+  #map{height:320px;border-radius:18px;border:1px solid var(--line);overflow:hidden;z-index:1;}
+  .pin{background:var(--pine);width:30px;height:30px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);display:grid;place-items:center;border:2.5px solid var(--paper);box-shadow:0 3px 8px rgba(0,0,0,.25);}
+  .pin span{transform:rotate(-45deg);color:var(--paper);font-weight:800;font-size:13px;font-family:'Bricolage Grotesque';}
+  .map-list{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+  .box-row{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;}
+  .box-row .dot{width:34px;height:34px;border-radius:10px;background:var(--pine-soft);color:var(--pine);display:grid;place-items:center;font-weight:800;font-family:'Bricolage Grotesque';flex-shrink:0;}
+  .box-row .info{flex:1;min-width:0;}
+  .box-row .nm{font-weight:700;font-size:14px;}
+  .box-row .ad{font-size:12px;color:var(--muted);}
+  .box-row .ct{font-size:12px;font-weight:700;color:var(--pine);}
+  .ble-hero{background:var(--ink);color:var(--paper);border-radius:20px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden;}
+  .ble-hero::after{content:"";position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.05);}
+  .ble-state{display:flex;align-items:center;gap:9px;font-size:13px;margin-bottom:14px;}
+  .led{width:9px;height:9px;border-radius:50%;background:var(--amber);}
+  .led.on{background:#54D67E;box-shadow:0 0 0 4px rgba(84,214,126,.18);}
+  .led.busy{background:var(--amber);animation:blink 1s infinite;}
+  @keyframes blink{50%{opacity:.25;}}
+  .ble-hero h2{font-size:22px;font-weight:800;margin-bottom:5px;}
+  .ble-hero p{font-size:13px;opacity:.7;line-height:1.45;}
+  .ctrl{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .ctrl button{padding:26px 12px;border-radius:18px;font-size:16px;flex-direction:column;gap:8px;}
+  .ctrl button svg{width:30px;height:30px;}
+  .notice{display:flex;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.5;color:var(--ink);margin-bottom:14px;}
+  .notice svg{width:18px;height:18px;flex-shrink:0;color:var(--terra);margin-top:1px;}
+  .notice b{font-weight:700;}
+  .log{background:#0E1A14;color:#9FE3B6;border-radius:14px;padding:14px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;min-height:90px;max-height:150px;overflow-y:auto;white-space:pre-wrap;}
+  details.settings{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:0 14px;margin-top:14px;}
+  details.settings summary{padding:13px 0;font-weight:700;font-size:14px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;}
+  details.settings summary::-webkit-details-marker{display:none;}
+  details.settings summary svg{width:16px;height:16px;color:var(--muted);}
+  .field{margin:0 0 14px;}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+  .field input,.field select,.field textarea{width:100%;font-family:inherit;font-size:14px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--paper);color:var(--ink);outline:none;}
+  .field textarea{resize:vertical;min-height:80px;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pine);}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px;font-size:13px;}
+  .prof-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .avatar{width:60px;height:60px;border-radius:18px;background:var(--terra);color:var(--paper);display:grid;place-items:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:24px;flex-shrink:0;}
+  .prof-head .nm{font-size:20px;font-weight:800;font-family:'Bricolage Grotesque';}
+  .prof-head .em{font-size:13px;color:var(--muted);}
+  .prof-head .since{font-size:12px;color:var(--muted);margin-top:2px;}
+  .stats3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;}
+  .stat .v{font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;}
+  .stat .l{font-size:11px;color:var(--muted);margin-top:2px;}
+  .wallet-hero{background:linear-gradient(135deg,var(--pine),#16402C);color:var(--paper);border-radius:20px;padding:22px;margin-bottom:14px;}
+  .wallet-hero .lbl{font-size:13px;opacity:.75;}
+  .wallet-hero .big{font-family:'Bricolage Grotesque';font-weight:800;font-size:42px;line-height:1;margin:6px 0 2px;}
+  .wallet-hero .sub{font-size:13px;opacity:.75;}
+  .breakdown{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:14px;}
+  .brk-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;}
+  .brk-row+.brk-row{border-top:1px solid var(--line-soft);}
+  .brk-row .l{display:flex;flex-direction:column;gap:4px;}
+  .brk-row .l .t{font-weight:700;font-size:14px;}
+  .tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;width:fit-content;}
+  .tag-no{background:#F2ECDD;color:#8A7B53;}
+  .tag-yes{background:var(--pine-soft);color:var(--pine);}
+  .brk-row .v{font-family:'Bricolage Grotesque';font-weight:800;font-size:18px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .sec-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;}
+  .mine{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:10px;}
+  .mine .em2{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:21px;flex-shrink:0;}
+  .mine .mi{flex:1;min-width:0;}
+  .mine .mt{font-weight:700;font-size:14px;}
+  .mine .ms{font-size:12px;color:var(--muted);}
+  .activity{display:flex;flex-direction:column;}
+  .act{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line-soft);}
+  .act .ai{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;}
+  .act .ai svg{width:18px;height:18px;}
+  .act .at{flex:1;font-size:14px;font-weight:600;}
+  .act .as{font-size:11.5px;color:var(--muted);font-weight:400;}
+  .act .av{font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;}
+  .pos{color:var(--pine);} .neg{color:var(--terra);}
+  .logout{margin-top:20px;color:var(--terra);text-align:center;font-weight:700;font-size:14px;cursor:pointer;padding:12px;}
+  nav.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--paper);border-top:1px solid var(--line);display:flex;z-index:600;padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+  nav.tabs button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;padding:4px 2px;}
+  nav.tabs button svg{width:22px;height:22px;}
+  nav.tabs button.active{color:var(--pine);}
+  .sheet-bg{position:fixed;inset:0;background:rgba(20,30,24,.45);z-index:900;display:none;}
+  .sheet-bg.open{display:block;}
+  .sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;background:var(--paper);border-radius:24px 24px 0 0;z-index:901;padding:20px 20px calc(22px + env(safe-area-inset-bottom));transition:transform .3s cubic-bezier(.2,.8,.2,1);max-height:90vh;overflow-y:auto;}
+  .sheet.open{transform:translateX(-50%) translateY(0);}
+  .sheet .grip{width:42px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 16px;}
+  .sheet .sh-thumb{width:100%;height:120px;border-radius:18px;display:grid;place-items:center;font-size:56px;margin-bottom:16px;position:relative;}
+  .sheet .sh-thumb .badge{position:absolute;top:10px;right:10px;}
+  .sheet h3{font-size:22px;font-weight:800;margin-bottom:6px;line-height:1.1;}
+  .sheet .sh-stars{color:var(--gold);font-size:13px;margin-bottom:12px;}
+  .sheet .sh-stars small{color:var(--muted);}
+  .sheet .desc{font-size:14.5px;color:#3C443A;line-height:1.55;margin-bottom:16px;}
+  .specs{display:flex;flex-direction:column;gap:1px;background:var(--line-soft);border-radius:12px;overflow:hidden;margin-bottom:18px;}
+  .spec{display:flex;justify-content:space-between;background:var(--paper);padding:11px 14px;font-size:13.5px;}
+  .spec .sk{color:var(--muted);}
+  .spec .sv{font-weight:700;}
+  .buy-opt{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:.15s;}
+  .buy-opt:active{background:var(--cream);}
+  .buy-opt .o-l{font-weight:700;font-size:15px;}
+  .buy-opt .o-bonus{font-size:11px;color:var(--pine);font-weight:700;margin-left:6px;}
+  .buy-opt .o-p{color:var(--muted);font-weight:700;}
+</style>
+</head>
+<body>
+<div class="login" id="login">
+  <div class="lg">C</div>
+  <h2>Bienvenido a<br>A Caixa</h2>
+  <p>Comparte herramientas y electrodomésticos con tu barrio. Inicia sesión para empezar.</p>
+  <label>Nombre</label>
+  <input id="liName" type="text" placeholder="Cómo te llamas" autocomplete="name">
+  <label>Correo electrónico</label>
+  <input id="liEmail" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+  <button class="btn btn-pine" id="loginBtn">Entrar</button>
+  <div class="demo">Prototipo de demostración. Los datos se guardan solo en este dispositivo; no hay servidor ni contraseñas reales.</div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
+  <h1 class="sr-only">A Caixa, préstamo de herramientas y electrodomésticos con taquillas inteligentes</h1>
+  <header>
+    <div class="brand"><div class="logo">C</div><div><div class="name">A Caixa</div><div class="tag">comparte, non compres</div></div></div>
+    <div class="pts-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><path d="M12 16.5h.01"/></svg><span id="ptsChip">200</span></div>
+  </header>
+
+  <section class="page active" id="p-explore">
+    <div class="eyebrow">Santiago de Compostela</div>
+    <div class="h-big">Toma prestado lo<br>que solo usas a veces</div>
+    <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg><input id="searchInput" type="text" placeholder="Buscar taladro, gofrera, proyector…"></div>
+    <div class="cats" id="cats"></div>
+    <div class="count" id="count"></div>
+    <div class="grid" id="toolGrid"></div>
+  </section>
+
+  <section class="page" id="p-map">
+    <div class="eyebrow">Taquillas inteligentes</div>
+    <div class="h-big">5 puntos de recogida<br>cerca de ti</div>
+    <div id="map"></div>
+    <div class="map-list" id="boxList"></div>
+  </section>
+
+  <section class="page" id="p-lend">
+    <div class="eyebrow">Gana puntos</div>
+    <div class="h-big">Presta algo que<br>tengas guardado</div>
+    <div class="notice" style="margin-bottom:18px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><div>Cada vez que alguien toma prestado tu objeto, <b>ganas sus puntos</b>. Cuantos más objetos prestes, más puedes pedir.</div></div>
+    <div class="field"><label>¿Qué quieres prestar?</label><input id="lnName" type="text" placeholder="Ej: Hidrolimpiadora Kärcher"></div>
+    <div class="field"><label>Categoría</label><select id="lnCat"></select></div>
+    <div class="field"><label>Descripción</label><textarea id="lnDesc" placeholder="Estado, accesorios incluidos, marca, consejos de uso…"></textarea></div>
+    <div class="field"><label>Precio por día (en puntos)</label><input id="lnCost" type="number" value="80" min="20"></div>
+    <div class="field"><label>Taquilla donde lo dejarás</label><select id="lnBox"></select></div>
+    <button class="btn btn-pine" id="lendBtn">Publicar objeto</button>
+  </section>
+
+  <section class="page" id="p-box">
+    <div class="ble-hero"><div class="ble-state"><span class="led" id="led"></span><span id="bleState">Sin conexión</span></div><h2>Abrir taquilla</h2><p>Conéctate por Bluetooth a la cerradura para recoger o dejar un objeto.</p></div>
+    <button class="btn btn-pine" id="connectBtn" style="margin-bottom:16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg><span id="connectLabel">Conectar a la caja</span></button>
+    <div class="ctrl">
+      <button class="btn btn-pine" id="openBtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/></svg>Abrir</button>
+      <button class="btn btn-ghost" id="closeBtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrar</button>
+    </div>
+    <div class="notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><div><b>La primera vez:</b> empareja el módulo en Ajustes › Bluetooth (PIN <b>1234</b> si lo pide). En BLE suele conectar sin PIN. Usa <b>Chrome en Android</b>.</div></div>
+    <div class="log" id="bleLog">› Esperando conexión…</div>
+    <details class="settings"><summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes avanzados</summary>
+      <div class="field"><label>Comando para ABRIR</label><input id="cmdOpen" value="1"></div>
+      <div class="field"><label>Comando para CERRAR</label><input id="cmdClose" value="0"></div>
+      <div class="field"><label>UUID del servicio BLE</label><input id="svcUuid" value="0000ffe0-0000-1000-8000-00805f9b34fb"></div>
+      <div class="field"><label>UUID de la característica BLE</label><input id="chrUuid" value="0000ffe1-0000-1000-8000-00805f9b34fb"></div>
+      <div class="toggle-row"><span>Mostrar todos los dispositivos</span><input type="checkbox" id="acceptAll"></div>
+    </details>
+  </section>
+
+  <section class="page" id="p-profile">
+    <div class="prof-head"><div class="avatar" id="pfAvatar">U</div><div><div class="nm" id="pfName">Usuario</div><div class="em" id="pfEmail">—</div><div class="since">Miembro desde junio 2026</div></div></div>
+    <div class="stats3"><div class="stat"><div class="v" id="stLend">0</div><div class="l">Prestados</div></div><div class="stat"><div class="v" id="stBorrow">0</div><div class="l">Tomados</div></div><div class="stat"><div class="v">4,9★</div><div class="l">Valoración</div></div></div>
+    <div class="wallet-hero"><div class="lbl">Saldo total de puntos</div><div class="big" id="wTotal">200</div><div class="sub"><span id="wCash">0</span> pts canjeables por dinero</div></div>
+    <div class="breakdown">
+      <div class="brk-row"><div class="l"><span class="t">De bienvenida</span><span class="tag tag-no">No canjeable</span></div><div class="v" id="bFree">200</div></div>
+      <div class="brk-row"><div class="l"><span class="t">Ganados prestando</span><span class="tag tag-no">No canjeable</span></div><div class="v" id="bEarned">0</div></div>
+      <div class="brk-row"><div class="l"><span class="t">Comprados</span><span class="tag tag-yes">Canjeable</span></div><div class="v" id="bPaid">0</div></div>
+    </div>
+    <div class="notice" style="margin-bottom:16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><div>Solo el dinero que entra puede salir: <b>únicamente los puntos comprados</b> se canjean por dinero.</div></div>
+    <div class="two"><button class="btn btn-pine" id="buyBtn">Comprar pts</button><button class="btn btn-ghost" id="redeemBtn" disabled>Canjear pts</button></div>
+    <div class="sec-title">Mis objetos publicados</div>
+    <div id="myItems"></div>
+    <div class="sec-title" style="margin-top:18px;">Actividad reciente</div>
+    <div class="activity" id="activity"></div>
+    <div class="logout" id="logoutBtn">Cerrar sesión</div>
+  </section>
+</div>
+
+<nav class="tabs" id="tabs" style="display:none;">
+  <button class="active" data-tab="explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Explorar</button>
+  <button data-tab="map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.27-7-11a7 7 0 0 1 14 0c0 4.73-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Mapa</button>
+  <button data-tab="lend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16v-3a4 4 0 0 0-8 0M12 3v9M9 6l3-3 3 3"/><rect x="3" y="16" width="18" height="5" rx="2"/></svg>Prestar</button>
+  <button data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>Caja</button>
+  <button data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Perfil</button>
+</nav>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet"><div class="grip"></div><div id="sheetContent"></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const CATEGORIES=[{id:'all',label:'Todo',ico:'🧰'},{id:'bric',label:'Bricolaje',ico:'🔧'},{id:'jard',label:'Jardín',ico:'🌿'},{id:'coci',label:'Cocina',ico:'🍳'},{id:'limp',label:'Limpieza',ico:'🧽'},{id:'fies',label:'Eventos',ico:'🎉'},{id:'tec',label:'Tecnología',ico:'💻'},{id:'aire',label:'Aire libre',ico:'⛺'},{id:'bebe',label:'Bebés',ico:'🍼'},{id:'auto',label:'Automoción',ico:'🚗'}];
+const BOXES=[{id:'A',name:'Caixa Praza de Galicia',addr:'Praza de Galicia, 2',lat:42.8782,lng:-8.5448},{id:'B',name:'Caixa Rúa do Franco',addr:'Rúa do Franco, 31',lat:42.8801,lng:-8.5461},{id:'C',name:'Caixa O Ensanche',addr:'Rúa do Hórreo, 70',lat:42.8753,lng:-8.5401},{id:'D',name:'Caixa Campus Vida',addr:'Av. de Vigo, USC',lat:42.8731,lng:-8.5557},{id:'E',name:'Caixa Sar',addr:'Rúa do Sar, 20',lat:42.8681,lng:-8.5383}];
+const THUMB_BG={bric:'#F3E7D6',jard:'#E4EEE6',coci:'#F8E5DC',limp:'#E6EEF3',fies:'#F4E6EE',tec:'#E9E6F2',aire:'#EAEFDD',bebe:'#FBEFD8',auto:'#E7E3DA'};
+const OWNERS=['Carlos M.','Ana R.','Pedro L.','Marta G.','Lucía F.','Xoán P.','Sofía B.','Diego V.','Noa C.','Iago S.'];
+function st(n){return '★'.repeat(n)+'☆'.repeat(5-n);}
+let TOOLS=[
+{n:'Taladro percutor Bosch',c:'bric',e:'🔩',box:'B',cost:70,busy:false,r:5,rev:42,d:'Taladro con percutor de 750W, ideal para colgar estanterías o perforar pared y hormigón. Incluye maletín y juego de brocas.',cond:'Muy buen estado',dep:40},
+{n:'Atornillador eléctrico',c:'bric',e:'🪛',box:'C',cost:55,busy:false,r:5,rev:30,d:'Atornillador a batería con dos baterías y cargador. Perfecto para montar muebles.',cond:'Como nuevo',dep:30},
+{n:'Lijadora orbital',c:'bric',e:'🪚',box:'B',cost:60,busy:false,r:4,rev:18,d:'Lijadora de 240W para restaurar muebles o preparar superficies antes de pintar. Lleva varias hojas de lija.',cond:'Buen estado',dep:30},
+{n:'Sierra de calar',c:'bric',e:'🔪',box:'A',cost:65,busy:true,r:5,rev:25,d:'Sierra de calar para cortes curvos en madera y melamina. Con guía láser.',cond:'Muy buen estado',dep:35},
+{n:'Amoladora angular',c:'bric',e:'⚙️',box:'C',cost:70,busy:false,r:4,rev:14,d:'Radial de 125mm para cortar metal o azulejo. Discos no incluidos.',cond:'Buen estado',dep:40},
+{n:'Set de carracas 40 pzas',c:'bric',e:'🔧',box:'C',cost:40,busy:false,r:5,rev:50,d:'Maletín completo de vasos y carraca para cualquier apriete doméstico o de bici.',cond:'Completo',dep:25},
+{n:'Pistola de calor',c:'bric',e:'🔥',box:'A',cost:50,busy:false,r:4,rev:9,d:'Para decapar pintura, soldar tubos o moldear plásticos. Dos temperaturas.',cond:'Buen estado',dep:25},
+{n:'Estación de soldadura',c:'bric',e:'🔌',box:'B',cost:45,busy:false,r:5,rev:12,d:'Soldador de estaño con control de temperatura para electrónica.',cond:'Muy buen estado',dep:30},
+{n:'Multímetro digital',c:'bric',e:'🔋',box:'C',cost:35,busy:false,r:5,rev:20,d:'Mide voltaje, corriente y continuidad. Ideal para reparaciones eléctricas.',cond:'Como nuevo',dep:20},
+{n:'Escalera plegable 3m',c:'bric',e:'🪜',box:'D',cost:40,busy:false,r:4,rev:16,d:'Escalera de aluminio multiposición, ligera y estable.',cond:'Buen estado',dep:25},
+{n:'Nivel láser autonivelante',c:'bric',e:'📏',box:'A',cost:55,busy:false,r:5,rev:11,d:'Proyecta líneas cruzadas para alicatar o colgar cuadros perfectos.',cond:'Como nuevo',dep:35},
+{n:'Pistola de pintura',c:'bric',e:'🎨',box:'D',cost:50,busy:false,r:4,rev:8,d:'Pistola eléctrica para pintar puertas, vallas y paredes sin brocha.',cond:'Buen estado',dep:30},
+{n:'Cortacésped eléctrico',c:'jard',e:'🌱',box:'E',cost:110,busy:true,r:5,rev:33,d:'Cortacésped de 1600W con recogedor de 40L. Para céspedes pequeños y medianos.',cond:'Muy buen estado',dep:60},
+{n:'Cortasetos',c:'jard',e:'🌳',box:'D',cost:80,busy:false,r:4,rev:19,d:'Cortasetos eléctrico de 60cm de espada para dar forma a setos y arbustos.',cond:'Buen estado',dep:40},
+{n:'Soplador de hojas',c:'jard',e:'🍂',box:'E',cost:65,busy:false,r:5,rev:22,d:'Soplador-aspirador 3 en 1 para recoger hojas en otoño.',cond:'Muy buen estado',dep:35},
+{n:'Desbrozadora',c:'jard',e:'🌾',box:'D',cost:90,busy:false,r:4,rev:15,d:'Desbrozadora eléctrica para maleza y bordes difíciles.',cond:'Buen estado',dep:45},
+{n:'Motosierra de poda',c:'jard',e:'🪵',box:'E',cost:95,busy:false,r:5,rev:10,d:'Motosierra ligera a batería para podar ramas. Incluye equipo de protección.',cond:'Como nuevo',dep:55},
+{n:'Biotrituradora',c:'jard',e:'♻️',box:'D',cost:100,busy:false,r:4,rev:7,d:'Tritura restos de poda para compostar. Reduce mucho el volumen.',cond:'Buen estado',dep:50},
+{n:'Gofrera doble',c:'coci',e:'🧇',box:'A',cost:35,busy:false,r:5,rev:28,d:'Gofrera para gofres belgas. Placas antiadherentes.',cond:'Como nuevo',dep:20},
+{n:'Deshidratador de alimentos',c:'coci',e:'🍎',box:'A',cost:75,busy:false,r:5,rev:17,d:'5 bandejas para hacer frutas secas, cecina o snacks saludables.',cond:'Muy buen estado',dep:35},
+{n:'Robot de cocina',c:'coci',e:'🥘',box:'C',cost:120,busy:false,r:5,rev:40,d:'Robot multifunción que pica, amasa, cocina al vapor y mucho más.',cond:'Como nuevo',dep:70},
+{n:'Sorbetera / heladera',c:'coci',e:'🍦',box:'B',cost:70,busy:false,r:4,rev:13,d:'Hace helado casero en 30 minutos. Para 1,5L.',cond:'Buen estado',dep:35},
+{n:'Máquina de pasta',c:'coci',e:'🍝',box:'C',cost:55,busy:true,r:5,rev:21,d:'Laminadora manual para tallarines, lasaña y raviolis caseros.',cond:'Muy buen estado',dep:30},
+{n:'Fondue eléctrica',c:'coci',e:'🫕',box:'A',cost:40,busy:false,r:4,rev:9,d:'Set de fondue de queso o chocolate para 6 personas.',cond:'Buen estado',dep:25},
+{n:'Envasadora al vacío',c:'coci',e:'📦',box:'B',cost:60,busy:false,r:5,rev:14,d:'Alarga la vida de los alimentos y prepara para sous-vide.',cond:'Como nuevo',dep:30},
+{n:'Crepera profesional',c:'coci',e:'🥞',box:'A',cost:45,busy:false,r:4,rev:11,d:'Placa de 40cm para crepes y filloas como en la feria.',cond:'Buen estado',dep:25},
+{n:'Olla a presión eléctrica',c:'coci',e:'🍲',box:'C',cost:80,busy:false,r:5,rev:24,d:'Multiolla programable: guisos en minutos, yogur, arroz y más.',cond:'Muy buen estado',dep:40},
+{n:'Hidrolimpiadora a presión',c:'limp',e:'💦',box:'E',cost:100,busy:false,r:5,rev:31,d:'Limpia terrazas, coches y fachadas con agua a presión. 140 bar.',cond:'Muy buen estado',dep:55},
+{n:'Vaporeta',c:'limp',e:'♨️',box:'C',cost:70,busy:false,r:4,rev:16,d:'Limpieza con vapor sin químicos para suelos, baños y tapicería.',cond:'Buen estado',dep:35},
+{n:'Aspirador de cenizas',c:'limp',e:'🌋',box:'D',cost:55,busy:false,r:5,rev:8,d:'Para vaciar chimeneas y barbacoas sin levantar polvo.',cond:'Como nuevo',dep:30},
+{n:'Robot limpiacristales',c:'limp',e:'🪟',box:'B',cost:75,busy:false,r:4,rev:10,d:'Robot que limpia ventanas grandes solo. Con mando.',cond:'Buen estado',dep:40},
+{n:'Aspirador industrial',c:'limp',e:'🧹',box:'D',cost:85,busy:false,r:5,rev:13,d:'Aspirador en seco y húmedo de 30L para obras y garajes.',cond:'Muy buen estado',dep:45},
+{n:'Altavoz PA + micrófono',c:'fies',e:'🔊',box:'A',cost:120,busy:false,r:5,rev:27,d:'Altavoz autoamplificado con batería y micro inalámbrico. Para fiestas y eventos.',cond:'Muy buen estado',dep:70},
+{n:'Máquina de humo',c:'fies',e:'🌫️',box:'C',cost:70,busy:false,r:4,rev:9,d:'Máquina de humo de 900W con líquido incluido. Efecto fiesta.',cond:'Buen estado',dep:35},
+{n:'Fuente de chocolate',c:'fies',e:'🍫',box:'A',cost:50,busy:false,r:5,rev:12,d:'Fuente de 3 pisos para celebraciones. Capacidad 1,5kg.',cond:'Como nuevo',dep:30},
+{n:'Carpa plegable 3x3',c:'fies',e:'⛱️',box:'E',cost:90,busy:true,r:4,rev:15,d:'Carpa resistente al agua para mercadillos, fiestas y comidas al aire libre.',cond:'Buen estado',dep:50},
+{n:'Foco LED de escenario',c:'fies',e:'💡',box:'C',cost:60,busy:false,r:5,rev:7,d:'Cabezal móvil RGB con mando. Ilumina cualquier fiesta.',cond:'Como nuevo',dep:35},
+{n:'Máquina algodón de azúcar',c:'fies',e:'🍬',box:'A',cost:65,busy:false,r:4,rev:18,d:'Hace algodón de azúcar como en las ferias. Éxito con los niños.',cond:'Buen estado',dep:35},
+{n:'Proyector Full HD',c:'tec',e:'📽️',box:'B',cost:95,busy:false,r:5,rev:36,d:'Proyector 1080p con 300 ANSI para cine en casa o presentaciones.',cond:'Muy buen estado',dep:55},
+{n:'Cámara réflex + objetivo',c:'tec',e:'📷',box:'B',cost:130,busy:false,r:5,rev:29,d:'Réflex con objetivo 18-55mm. Perfecta para viajes y eventos.',cond:'Como nuevo',dep:80},
+{n:'Pantalla de proyección',c:'tec',e:'🎬',box:'A',cost:50,busy:false,r:4,rev:8,d:'Pantalla enrollable de 100" para usar con el proyector.',cond:'Buen estado',dep:30},
+{n:'Estabilizador gimbal',c:'tec',e:'🎥',box:'B',cost:70,busy:false,r:5,rev:11,d:'Gimbal de 3 ejes para móvil. Vídeos suaves de calidad pro.',cond:'Como nuevo',dep:40},
+{n:'Impresora 3D',c:'tec',e:'🖨️',box:'C',cost:140,busy:false,r:4,rev:14,d:'Impresora 3D FDM lista para imprimir. Incluye una bobina de filamento.',cond:'Buen estado',dep:90},
+{n:'Tienda de campaña 4p',c:'aire',e:'⛺',box:'D',cost:80,busy:false,r:5,rev:22,d:'Tienda iglú para 4 personas, fácil de montar e impermeable.',cond:'Muy buen estado',dep:45},
+{n:'Hornillo de gas',c:'aire',e:'🔥',box:'E',cost:40,busy:false,r:4,rev:10,d:'Hornillo portátil con cartucho para acampada o emergencias.',cond:'Buen estado',dep:20},
+{n:'Nevera eléctrica portátil',c:'aire',e:'🧊',box:'E',cost:65,busy:false,r:5,rev:13,d:'Nevera de 24L con enchufe de coche. Para viajes y playa.',cond:'Como nuevo',dep:35},
+{n:'Saco de dormir -5°C',c:'aire',e:'🛌',box:'D',cost:35,busy:false,r:4,rev:9,d:'Saco de dormir para tres estaciones. Limpio y compacto.',cond:'Buen estado',dep:20},
+{n:'Trona de viaje',c:'bebe',e:'🪑',box:'C',cost:35,busy:false,r:5,rev:15,d:'Trona portátil que se sujeta a cualquier mesa. Ideal para visitas.',cond:'Muy buen estado',dep:20},
+{n:'Esterilizador de biberones',c:'bebe',e:'🍼',box:'A',cost:30,busy:false,r:5,rev:11,d:'Esterilizador de vapor para biberones y chupetes.',cond:'Como nuevo',dep:18},
+{n:'Cuna de viaje',c:'bebe',e:'🛏️',box:'D',cost:45,busy:false,r:4,rev:8,d:'Cuna plegable con colchón. Perfecta para casa de los abuelos.',cond:'Buen estado',dep:25},
+{n:'Gato hidráulico + llaves',c:'auto',e:'🛞',box:'D',cost:60,busy:false,r:5,rev:17,d:'Gato de 2T con juego de llaves para cambiar ruedas con seguridad.',cond:'Muy buen estado',dep:35},
+{n:'Arrancador de batería',c:'auto',e:'⚡',box:'C',cost:70,busy:false,r:5,rev:20,d:'Booster portátil para arrancar el coche sin pinzas ni ayuda.',cond:'Como nuevo',dep:40},
+{n:'Lector OBD2',c:'auto',e:'🔎',box:'B',cost:55,busy:false,r:4,rev:12,d:'Diagnóstico del coche por Bluetooth: lee y borra códigos de error.',cond:'Buen estado',dep:30}
+];
+
+let state=load()||{user:null,free:200,earned:0,paid:0,
+  myItems:[{n:'Taladro percutor Bosch',e:'🔩',c:'bric',box:'B',cost:70}],
+  acts:[{t:'Prestaste el taladro',s:'Hace 2 días',v:'+120',k:'lend'},{t:'Tomaste el proyector',s:'Hace 1 semana',v:'-95',k:'borrow'}]};
+function total(){return state.free+state.earned+state.paid;}
+function save(){try{localStorage.setItem('acaixa2',JSON.stringify(state));}catch(e){}}
+function load(){try{const r=localStorage.getItem('acaixa2');return r?JSON.parse(r):null;}catch(e){return null;}}
+
+const loginEl=document.getElementById('login'),appRoot=document.getElementById('appRoot'),tabsEl=document.getElementById('tabs');
+function showApp(){loginEl.classList.add('hidden');appRoot.style.display='block';tabsEl.style.display='flex';
+  const u=state.user;document.getElementById('pfName').textContent=u.name;document.getElementById('pfEmail').textContent=u.email;
+  document.getElementById('pfAvatar').textContent=(u.name[0]||'U').toUpperCase();renderAll();}
+document.getElementById('loginBtn').addEventListener('click',()=>{
+  const name=document.getElementById('liName').value.trim(),email=document.getElementById('liEmail').value.trim();
+  if(!name||!email){alert('Pon tu nombre y tu correo para entrar.');return;}
+  state.user={name,email};save();showApp();});
+document.getElementById('logoutBtn').addEventListener('click',()=>{
+  state.user=null;save();appRoot.style.display='none';tabsEl.style.display='none';loginEl.classList.remove('hidden');});
+
+function renderPoints(){
+  document.getElementById('ptsChip').textContent=total();
+  document.getElementById('wTotal').textContent=total();
+  document.getElementById('wCash').textContent=state.paid;
+  document.getElementById('bFree').textContent=state.free;
+  document.getElementById('bEarned').textContent=state.earned;
+  document.getElementById('bPaid').textContent=state.paid;
+  document.getElementById('redeemBtn').disabled=state.paid===0;
+  document.getElementById('stLend').textContent=state.myItems.length;
+  document.getElementById('stBorrow').textContent=state.acts.filter(a=>a.k==='borrow').length;
+  const icons={lend:['<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>','#E4EEE6','#1F5A3E'],borrow:['<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>','#F8E5DC','#D9572B'],buy:['<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>','#E9E6F2','#5B4B9A']};
+  document.getElementById('activity').innerHTML=state.acts.map(a=>{const[svg,bg,col]=icons[a.k]||icons.buy;const cls=a.v.startsWith('+')?'pos':'neg';return `<div class="act"><div class="ai" style="background:${bg};color:${col}">${svg}</div><div class="at">${a.t}<div class="as">${a.s}</div></div><div class="av ${cls}">${a.v}</div></div>`;}).join('');
+  document.getElementById('myItems').innerHTML=state.myItems.length?state.myItems.map(m=>`<div class="mine"><div class="em2" style="background:${THUMB_BG[m.c]||'#eee'}">${m.e}</div><div class="mi"><div class="mt">${m.n}</div><div class="ms">Caixa ${m.box} · ${m.cost} pts/día</div></div><span class="tag tag-yes">Activo</span></div>`).join(''):'<p style="color:var(--muted);font-size:14px;">Aún no has publicado nada. Ve a "Prestar".</p>';
+  save();
+}
+function addAct(t,k,v){state.acts.unshift({t,s:'Ahora mismo',v,k});}
+
+let activeCat='all',query='';
+function renderCats(){document.getElementById('cats').innerHTML=CATEGORIES.map(c=>`<button class="cat ${c.id===activeCat?'active':''}" data-cat="${c.id}"><span class="ico">${c.ico}</span>${c.label}</button>`).join('');}
+function filtered(){const q=query.toLowerCase();return TOOLS.filter(t=>(activeCat==='all'||t.c===activeCat)&&t.n.toLowerCase().includes(q));}
+function renderTools(){const list=filtered(),g=document.getElementById('toolGrid');
+  document.getElementById('count').textContent=`${list.length} objetos disponibles`;
+  if(!list.length){g.innerHTML='<p style="grid-column:1/-1;color:var(--muted);font-size:14px;padding:20px 0;">Nada por aquí. Prueba otra búsqueda.</p>';return;}
+  g.innerHTML=list.map(t=>`<div class="card" data-tool="${TOOLS.indexOf(t)}"><div class="thumb" style="background:${THUMB_BG[t.c]}">${t.e}<span class="badge ${t.busy?'b-busy':'b-ok'}">${t.busy?'Ocupado':'Libre'}</span></div><div class="body"><div class="ttl">${t.n}</div><div class="stars">${st(t.r)} <small>(${t.rev})</small></div><div class="cost"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>${t.cost} pts/día</div></div></div>`).join('');
+}
+
+const sheet=document.getElementById('sheet'),sheetBg=document.getElementById('sheetBg'),sc=document.getElementById('sheetContent');
+function openSheet(h){sc.innerHTML=h;sheetBg.classList.add('open');sheet.classList.add('open');}
+function closeSheet(){sheetBg.classList.remove('open');sheet.classList.remove('open');}
+sheetBg.addEventListener('click',closeSheet);
+function toolSheet(idx){const t=TOOLS[idx],box=BOXES.find(b=>b.id===t.box),owner=OWNERS[idx%OWNERS.length];
+  openSheet(`<div class="sh-thumb" style="background:${THUMB_BG[t.c]}">${t.e}<span class="badge ${t.busy?'b-busy':'b-ok'}">${t.busy?'Ocupado':'Libre'}</span></div><h3>${t.n}</h3><div class="sh-stars">${st(t.r)} <small>${t.r},0 · ${t.rev} reseñas</small></div><div class="desc">${t.d}</div><div class="specs"><div class="spec"><span class="sk">Propietario</span><span class="sv">${owner}</span></div><div class="spec"><span class="sk">Estado</span><span class="sv">${t.cond}</span></div><div class="spec"><span class="sk">Taquilla</span><span class="sv">${box.name}</span></div><div class="spec"><span class="sk">Fianza (se devuelve)</span><span class="sv">${t.dep} pts</span></div><div class="spec"><span class="sk">Precio</span><span class="sv" style="color:var(--pine)">${t.cost} pts/día</span></div></div><button class="btn btn-pine" ${t.busy?'disabled':''} id="reserveGo">${t.busy?'No disponible ahora':'Reservar y abrir caja'}</button>`);
+  const g=document.getElementById('reserveGo');
+  if(g&&!t.busy)g.addEventListener('click',()=>{if(total()<t.cost){alert('No tienes puntos suficientes. Presta algo o compra puntos en tu perfil.');return;}let r=t.cost;const take=k=>{const d=Math.min(state[k],r);state[k]-=d;r-=d;};take('free');take('earned');take('paid');addAct('Reservaste '+t.n,'borrow','-'+t.cost);renderPoints();closeSheet();go('box');log('› Reserva confirmada. Ve a "'+box.name+'" y pulsa Abrir.');});
+}
+function buySheet(){openSheet(`<h3>Comprar puntos</h3><div class="desc">Los puntos comprados son los únicos canjeables por dinero.</div><div class="buy-opt" data-buy="100,1.99"><div><span class="o-l">100 pts</span></div><span class="o-p">1,99 €</span></div><div class="buy-opt" data-buy="550,8.99"><div><span class="o-l">500 pts</span><span class="o-bonus">+50 extra</span></div><span class="o-p">8,99 €</span></div><div class="buy-opt" data-buy="1300,19.99"><div><span class="o-l">1.200 pts</span><span class="o-bonus">+100 extra</span></div><span class="o-p">19,99 €</span></div>`);
+  sc.querySelectorAll('[data-buy]').forEach(el=>el.addEventListener('click',()=>{const[amt]=el.dataset.buy.split(',').map(Number);state.paid+=amt;addAct('Compraste '+amt+' pts','buy','+'+amt);renderPoints();closeSheet();}));}
+function redeemSheet(){const eur=(state.paid*0.015).toFixed(2);openSheet(`<h3>Canjear por dinero</h3><div class="desc">Tienes <b>${state.paid} pts canjeables</b> ≈ ${eur} €</div><div class="field"><label>Puntos a canjear</label><input type="number" id="rAmt" value="${state.paid}" min="0" max="${state.paid}"></div><button class="btn btn-pine" id="rGo">Canjear</button>`);
+  document.getElementById('rGo').addEventListener('click',()=>{const a=Math.min(parseInt(document.getElementById('rAmt').value)||0,state.paid);if(a<=0)return;state.paid-=a;addAct('Canjeaste '+a+' pts','buy','-'+a);renderPoints();closeSheet();});}
+
+function fillLendSelects(){document.getElementById('lnCat').innerHTML=CATEGORIES.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}">${c.ico} ${c.label}</option>`).join('');document.getElementById('lnBox').innerHTML=BOXES.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
+document.getElementById('lendBtn').addEventListener('click',()=>{
+  const n=document.getElementById('lnName').value.trim(),c=document.getElementById('lnCat').value,desc=document.getElementById('lnDesc').value.trim(),cost=parseInt(document.getElementById('lnCost').value)||80,box=document.getElementById('lnBox').value;
+  if(!n){alert('Ponle un nombre a tu objeto.');return;}
+  const emoji=CATEGORIES.find(x=>x.id===c).ico;
+  TOOLS.unshift({n,c,e:emoji,box,cost,busy:false,r:5,rev:0,d:desc||'Sin descripción.',cond:'Indicado por el dueño',dep:Math.round(cost*0.5)});
+  state.myItems.unshift({n,e:emoji,c,box,cost});addAct('Publicaste '+n,'lend','+0');renderPoints();
+  document.getElementById('lnName').value='';document.getElementById('lnDesc').value='';
+  alert('¡Publicado! Ya aparece en Explorar. Ganarás puntos cuando alguien lo reserve.');
+  go('explore');activeCat='all';renderCats();renderTools();});
+
+let mapInited=false;
+function go(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('p-'+tab).classList.add('active');document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));if(tab==='map'&&!mapInited){initMap();mapInited=true;}window.scrollTo(0,0);}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.tab)));
+
+function initMap(){const map=L.map('map').setView([42.8782,-8.5455],14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const pts=[];BOXES.forEach(b=>{const count=TOOLS.filter(t=>t.box===b.id&&!t.busy).length;const icon=L.divIcon({className:'',html:`<div class="pin"><span>${b.id}</span></div>`,iconSize:[30,30],iconAnchor:[15,28]});L.marker([b.lat,b.lng],{icon}).addTo(map).bindPopup(`<b>${b.name}</b><br>${b.addr}<br>${count} objetos libres`);pts.push([b.lat,b.lng]);});
+  map.fitBounds(pts,{padding:[40,40]});
+  document.getElementById('boxList').innerHTML=BOXES.map(b=>{const count=TOOLS.filter(t=>t.box===b.id&&!t.busy).length;return `<div class="box-row"><div class="dot">${b.id}</div><div class="info"><div class="nm">${b.name}</div><div class="ad">${b.addr}</div></div><div class="ct">${count} libres</div></div>`;}).join('');
+}
+
+let bleDevice=null,bleChar=null;
+const led=document.getElementById('led'),bleState=document.getElementById('bleState'),connectBtn=document.getElementById('connectBtn'),connectLabel=document.getElementById('connectLabel'),openBtn=document.getElementById('openBtn'),closeBtn=document.getElementById('closeBtn');
+function log(m){const el=document.getElementById('bleLog');const t=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});el.textContent=`[${t}] ${m}\n`+el.textContent;}
+function setSt(t,c){bleState.textContent=t;led.className='led'+(c?(' '+c):'');}
+async function connect(){
+  if(!navigator.bluetooth){log('✗ Sin soporte Web Bluetooth.');alert('Tu navegador no soporta Web Bluetooth. Usa Chrome en Android (no iPhone/Safari ni Firefox).');return;}
+  if(bleDevice&&bleDevice.gatt.connected){disconnect();return;}
+  const svc=document.getElementById('svcUuid').value.trim().toLowerCase(),chr=document.getElementById('chrUuid').value.trim().toLowerCase(),all=document.getElementById('acceptAll').checked;
+  try{setSt('Buscando dispositivo…','busy');log('› Escaneando…');
+    const opts=all?{acceptAllDevices:true,optionalServices:[svc]}:{filters:[{services:[svc]}],optionalServices:[svc]};
+    bleDevice=await navigator.bluetooth.requestDevice(opts);bleDevice.addEventListener('gattserverdisconnected',onDisc);
+    log('› Conectando a '+(bleDevice.name||'dispositivo')+'…');
+    const server=await bleDevice.gatt.connect(),service=await server.getPrimaryService(svc);bleChar=await service.getCharacteristic(chr);
+    try{await bleChar.startNotifications();bleChar.addEventListener('characteristicvaluechanged',e=>log('← '+new TextDecoder().decode(e.target.value)));}catch(e){}
+    setSt('Conectado · '+(bleDevice.name||'caja'),'on');connectLabel.textContent='Desconectar';openBtn.disabled=false;closeBtn.disabled=false;log('✓ Enlace BLE establecido (FFE0/FFE1).');
+  }catch(err){setSt('Sin conexión','');log('✗ '+(err.message||err));}
+}
+function onDisc(){setSt('Sin conexión','');connectLabel.textContent='Conectar a la caja';openBtn.disabled=true;closeBtn.disabled=true;bleChar=null;log('✗ Dispositivo desconectado.');}
+function disconnect(){if(bleDevice&&bleDevice.gatt.connected)bleDevice.gatt.disconnect();}
+async function sendCmd(cmd){if(!bleChar){log('✗ No hay conexión.');return;}try{const d=new TextEncoder().encode(cmd);if(bleChar.properties.writeWithoutResponse)await bleChar.writeValueWithoutResponse(d);else await bleChar.writeValue(d);log('→ Enviado: "'+cmd+'"');}catch(err){log('✗ Error al enviar: '+(err.message||err));}}
+connectBtn.addEventListener('click',connect);
+openBtn.addEventListener('click',()=>{sendCmd(document.getElementById('cmdOpen').value);log('🔓 Abriendo cerradura…');});
+closeBtn.addEventListener('click',()=>{sendCmd(document.getElementById('cmdClose').value);log('🔒 Cerrando cerradura…');});
+
+document.getElementById('searchInput').addEventListener('input',e=>{query=e.target.value;renderTools();});
+document.getElementById('cats').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b)return;activeCat=b.dataset.cat;renderCats();renderTools();});
+document.getElementById('toolGrid').addEventListener('click',e=>{const c=e.target.closest('[data-tool]');if(!c)return;toolSheet(+c.dataset.tool);});
+document.getElementById('buyBtn').addEventListener('click',buySheet);
+document.getElementById('redeemBtn').addEventListener('click',redeemSheet);
+
+function renderAll(){renderCats();renderTools();renderPoints();fillLendSelects();}
+if(state.user){showApp();}else{loginEl.classList.remove('hidden');}
+</script>
+</body>
+</html>
